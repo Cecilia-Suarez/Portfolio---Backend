@@ -29,7 +29,7 @@ public class SkillController {
         return skillService.createSkill(skill);
     }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteSkill(@PathVariable Long id){
         skillService.deleteSkill(id);
         return ResponseEntity.ok(HttpStatus.NO_CONTENT);

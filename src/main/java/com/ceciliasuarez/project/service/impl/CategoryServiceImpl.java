@@ -3,6 +3,7 @@ package com.ceciliasuarez.project.service.impl;
 import com.ceciliasuarez.project.model.Category;
 import com.ceciliasuarez.project.repository.ICategoryRepository;
 import com.ceciliasuarez.project.service.ICategoryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.List;
 @Service
 public class CategoryServiceImpl implements ICategoryService {
 
+    @Autowired
     private ICategoryRepository categoryRepository;
 
     @Override

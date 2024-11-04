@@ -31,11 +31,11 @@ public class Project {
     private Category category;
 
     @ManyToMany
-    @JoinTable(name = "skills", joinColumns = @JoinColumn(name = "id_project"), inverseJoinColumns = @JoinColumn(name = "id_skill"))
+    @JoinTable(name = "project_skills", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
     @Column(nullable = false)
     private List<Skill> skills;
 
+    /*GALERIA DE IMAGENES
     @Column(nullable = false, columnDefinition = "LONGTEXT")
-    private List<String> images;
-
+    private List<Image> images;*/
 }

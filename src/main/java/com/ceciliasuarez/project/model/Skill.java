@@ -18,6 +18,6 @@ public class Skill {
 
     @Lob
     @Column(nullable = false, columnDefinition = "LONGTEXT")
-    private String imagen;
+    private String image;
 
 }

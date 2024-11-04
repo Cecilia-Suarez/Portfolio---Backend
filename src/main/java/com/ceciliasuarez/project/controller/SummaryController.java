@@ -35,14 +35,15 @@ public class SummaryController {
         return summaryService.createSummary(summary);
     }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteSummary(@PathVariable Long id){
         summaryService.deleteSummary(id);
         return ResponseEntity.ok(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/update")
-    public Summary updateSummary(@PathVariable Long id, Summary summary){
-        return summaryService.updateSummary(id, summary);
+    public ResponseEntity<?> updateSummary(@RequestBody Summary summary){
+        summaryService.updateSummary(summary);
+        return ResponseEntity.ok(HttpStatus.NO_CONTENT);
     }
 }

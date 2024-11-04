@@ -12,7 +12,7 @@ public interface ISummaryService {
 
     Summary createSummary(Summary summary);
 
-    Summary updateSummary(Long id, Summary summary);
+    void updateSummary(Summary summary);
 
     void deleteSummary(Long id);
 }

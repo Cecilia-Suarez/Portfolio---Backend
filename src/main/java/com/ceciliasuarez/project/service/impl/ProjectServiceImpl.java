@@ -38,8 +38,10 @@ public class ProjectServiceImpl implements IProjectService {
     }
 
     @Override
-    public Project updateProject(Long id, Project project) {
-        return projectRepository.save(project);
+    public void updateProject(Project project) {
+        if (getProjectById(project.getId()) !=null) {
+            projectRepository.save(project);
+        }
     }
 
     @Override

@@ -28,10 +28,10 @@ public class CategoryController {
         return categoryService.createCategory(category);
     }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable Long id){
         categoryService.deleteCategory(id);
-        return ResponseEntity.ok(HttpStatus.NO_CONTENT);
+        return ResponseEntity.ok(HttpStatus.NO_CONTENT); //Cambiar esto
     }
 
 }

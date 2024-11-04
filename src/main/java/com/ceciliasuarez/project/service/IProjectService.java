@@ -11,7 +11,7 @@ public interface IProjectService {
 
     Project createProject(Project project);
 
-    Project updateProject(Long id, Project project);
+    void updateProject(Project project);
 
     void deleteProject(Long id);
 }
