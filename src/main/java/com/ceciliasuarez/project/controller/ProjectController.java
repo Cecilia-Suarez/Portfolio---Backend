@@ -15,7 +15,6 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/projects")
 public class ProjectController {
-
     private final IProjectService projectService;
 
     @Autowired

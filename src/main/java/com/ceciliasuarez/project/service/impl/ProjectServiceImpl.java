@@ -35,7 +35,6 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     public Project createProject(Project project) {
         return projectRepository.save(project);
-
     }
 
     @Override

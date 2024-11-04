@@ -3,9 +3,10 @@ package com.ceciliasuarez.project.service;
 import com.ceciliasuarez.project.model.Summary;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ISummaryService {
-    Summary getSummaryById(Long id);
+    Optional<Summary> getSummaryById(Long id);
 
     List<Summary> getAllSummary(); //Ordenar por año
 
