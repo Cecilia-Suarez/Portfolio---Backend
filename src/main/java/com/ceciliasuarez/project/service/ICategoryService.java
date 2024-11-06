@@ -1,6 +1,7 @@
 package com.ceciliasuarez.project.service;
 
 import com.ceciliasuarez.project.model.Category;
+import org.apache.coyote.BadRequestException;
 
 import java.util.List;
 
