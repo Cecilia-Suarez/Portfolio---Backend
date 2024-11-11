@@ -1,10 +1,9 @@
 package com.ceciliasuarez.project.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
-
-
 import java.util.List;
 
 @Getter
@@ -26,7 +25,18 @@ public class Project {
     private int year;
 
     @Column(nullable = false)
+    @Pattern(
+            regexp = "^(https?://)?(www\\.)?[a-zA-Z0-9-]+(\\.[a-zA-Z]{2,})(/[\\w-]*)*$",
+            message = "The site must be in a valid web format, for example: www.example.com"
+    )
     private String site;
+
+    @Column(nullable = false)
+    @Pattern(
+            regexp = "^(https?://)?(www\\.)?[a-zA-Z0-9-]+(\\.[a-zA-Z]{2,})(/[\\w-]*)*$",
+            message = "The site must be in a valid web format, for example: www.example.com"
+    )
+    private String repository;
 
     @ManyToOne
     @JoinColumn(name = "categoryId", nullable = false)

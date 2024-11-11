@@ -12,6 +12,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/summaries")
+@CrossOrigin(origins = "http://localhost:5173")
 public class SummaryController {
     private final ISummaryService summaryService;
 
