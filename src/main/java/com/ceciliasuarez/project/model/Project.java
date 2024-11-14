@@ -47,7 +47,8 @@ public class Project {
     @Column(nullable = false)
     private List<Skill> skills;
 
-    /*GALERIA DE IMAGENES
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
-    private List<Image> images;*/
+    @Lob
+    @ElementCollection
+    private List<String> images;
+
 }
