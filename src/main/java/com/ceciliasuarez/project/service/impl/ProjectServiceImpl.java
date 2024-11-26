@@ -5,21 +5,29 @@ import com.ceciliasuarez.project.exceptions.ResourceNotFoundException;
 import com.ceciliasuarez.project.model.Project;
 import com.ceciliasuarez.project.repository.IProjectRepository;
 import com.ceciliasuarez.project.service.IProjectService;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class ProjectServiceImpl implements IProjectService {
 
     private IProjectRepository projectRepository;
+    private final Cloudinary cloudinary;
 
     @Autowired
-    public ProjectServiceImpl(IProjectRepository projectRepository) {
+    public ProjectServiceImpl(IProjectRepository projectRepository, Cloudinary cloudinary) {
         this.projectRepository = projectRepository;
+        this.cloudinary = cloudinary;
     }
 
     private static final Logger logger = Logger.getLogger(ProjectServiceImpl.class);
@@ -85,4 +93,19 @@ public class ProjectServiceImpl implements IProjectService {
         logger.info("Project removed successfully!");
         projectRepository.deleteById(id);
     }
+
+    /*@Override
+    public List<String> uploadImages(List<MultipartFile> files) throws IOException {
+        logger.info("Uploading images to Cloudinary...");
+        List<String> imageUrls = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+            String imageUrl = (String) uploadResult.get("url");
+            imageUrls.add(imageUrl);
+        }
+        logger.info("Images uploaded successfully.");
+        return imageUrls;
+    }*/
+
 }

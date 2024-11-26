@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,10 +34,14 @@ public class ProjectController {
         return projectService.getProjectById(id);
     }
 
-    @PostMapping("/new")
-    public Project createProject(@Valid @RequestBody Project project){
-        return projectService.createProject(project);
-    }
+   /* @PostMapping("/new")
+    public ResponseEntity<Project> createProject(@Valid @RequestParam("images") List<MultipartFile> images, @RequestBody Project project) throws IOException {
+        List<String> imageUrls = projectService.uploadImages(images);
+        project.setImages(imageUrls);
+        Project createdProject = projectService.createProject(project);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdProject);
+
+    }*/
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteProject(@PathVariable Long id){
