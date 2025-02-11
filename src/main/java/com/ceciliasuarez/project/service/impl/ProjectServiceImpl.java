@@ -1,111 +1,216 @@
 package com.ceciliasuarez.project.service.impl;
 
+import com.ceciliasuarez.project.Dto.ProjectDto;
 import com.ceciliasuarez.project.exceptions.DuplicateResourceException;
 import com.ceciliasuarez.project.exceptions.ResourceNotFoundException;
 import com.ceciliasuarez.project.model.Project;
+import com.ceciliasuarez.project.model.Skill;
+import com.ceciliasuarez.project.model.translation.ProjectTranslation;
+import com.ceciliasuarez.project.repository.ICategoryRepository;
 import com.ceciliasuarez.project.repository.IProjectRepository;
+import com.ceciliasuarez.project.repository.ISkillRepository;
+import com.ceciliasuarez.project.repository.translation.IProjectTranslationRepository;
 import com.ceciliasuarez.project.service.IProjectService;
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class ProjectServiceImpl implements IProjectService {
 
-    private IProjectRepository projectRepository;
-    private final Cloudinary cloudinary;
-
-    @Autowired
-    public ProjectServiceImpl(IProjectRepository projectRepository, Cloudinary cloudinary) {
-        this.projectRepository = projectRepository;
-        this.cloudinary = cloudinary;
-    }
+    public static final String DEFAULT_LANGUAGE = "es";
+    private final IProjectRepository projectRepository;
+    private final IProjectTranslationRepository translationRepository;
+    private final ICategoryRepository categoryRepository;
+    private final ISkillRepository skillsRepository;
 
     private static final Logger logger = Logger.getLogger(ProjectServiceImpl.class);
 
-    @Override
-    public Optional<Project> getProjectById(Long id) {
-        logger.info("Searching project by id...");
-        Optional<Project> project = projectRepository.findById(id);
-        if (!project.isPresent()){
-            logger.info("Error when searching the project with the id " + id);
-            throw new ResourceNotFoundException("The project with the id does not exist.");
-        }
-        logger.info("Project found successfully.");
-        return project;
+    @Autowired
+    public ProjectServiceImpl(IProjectRepository projectRepository, IProjectTranslationRepository translationRepository, ISkillRepository skillsRepository, ICategoryRepository categoryRepository) {
+        this.projectRepository = projectRepository;
+        this.translationRepository = translationRepository;
+        this.categoryRepository = categoryRepository;
+        this.skillsRepository = skillsRepository;
     }
 
     @Override
     public List<Project> getAllProject() {
-        logger.info("Projects list:");
+        logger.info("Fetching all projects...");
         return projectRepository.findAll();
+    }
+
+    @Override
+    public Project getProjectById(Long id) {
+        logger.info("Searching project by id...");
+        return projectRepository.findById(id).orElseThrow(() -> {
+            logger.info("Error when searching the project with the id " + id);
+            return new ResourceNotFoundException("The project with the id does not exist.");
+        });
     }
 
     @Override
     public Project createProject(Project project) {
         logger.info("Saving new project...");
-        List<Project> listProjects = getAllProject();
-        for (Project existingProject: listProjects) {
-            if (existingProject.getName().equals(project.getName())){
-                logger.info("Error when saving new project.");
-                throw new DuplicateResourceException("A project with this name already exists.");
-            }
-            if (existingProject.getSite().equals(project.getSite())) {
-                logger.info("Error when saving new project.");
-                throw new DuplicateResourceException("A project with this site already exists.");
-            }
-            if (existingProject.getRepository().equals(project.getRepository())){
-                logger.info("Error when saving new project.");
-                throw new DuplicateResourceException("A project with this repository already exists.");
-            }
+
+        if (translationExists(project.getTranslations())) {
+            logger.warn("Error: A project with this name already exists for the given language.");
+            throw new DuplicateResourceException("A project with this name already exists for the given language.");
         }
+
+        if (projectRepository.existsBySite(project.getSite())) {
+            logger.warn("Error: A project with this site already exists.");
+            throw new DuplicateResourceException("A project with this site already exists.");
+        }
+
+        if (projectRepository.existsByRepository(project.getRepository())) {
+            logger.warn("Error: A project with this repository already exists.");
+            throw new DuplicateResourceException("A project with this repository already exists.");
+        }
+
+        categoryRepository.findById(project.getCategory().getId()).orElseThrow(() -> {
+            logger.info("Category removal failure.");
+            return new ResourceNotFoundException("There is no category with the id " + project.getCategory().getId());
+        });
+
+        for (Skill skill : project.getSkills()) {
+            skillsRepository.findById(skill.getId()).orElseThrow(() -> {
+                logger.info("Skill removal failure.");
+                return new ResourceNotFoundException("There is no Skill with the id " + skill.getId());
+            });
+        }
+
+        for (ProjectTranslation translation : project.getTranslations()) {
+            translation.setProject(project);
+        }
+
         logger.info("Project saved successfully!");
         return projectRepository.save(project);
     }
 
     @Override
-    public void updateProject(Project project) {
-        logger.info("Updating project...");
-        if (getProjectById(project.getId()) == null){
-            logger.info("Error updating project.");
-            throw new ResourceNotFoundException("The project could not be updated, because there is no project with the given id.");
+    public ProjectTranslation addTranslation(Long projectId, ProjectTranslation translation) {
+        logger.info("Adding translation for project id " + projectId);
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> {
+                    logger.info("Error adding translation: project not found.");
+                    return new ResourceNotFoundException("Project not found with id: " + projectId);
+                });
+
+        translation.setProject(project);
+        return translationRepository.save(translation);
+    }
+
+    @Override
+    public ProjectDto getProjectByLanguage(Long projectId, String language) {
+        logger.info("Searching project by id " + projectId + " and language " + language);
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
+
+        ProjectTranslation translation = translationRepository
+                .findByProjectIdAndLanguageCode(project.getId(), language)
+                .or(() -> translationRepository.findByProjectIdAndLanguageCode(project.getId(), DEFAULT_LANGUAGE))
+                .orElseThrow(() -> new ResourceNotFoundException("No translation found for project id: " + projectId));
+
+        logger.info("Project found successfully.");
+
+        return new ProjectDto(
+                project.getId(),
+                translation.getName(),
+                translation.getDescription(),
+                project.getYear(),
+                project.getSite(),
+                project.getRepository(),
+                project.getCategory(),
+                project.getSkills(),
+                project.getImages()
+        );
+    }
+
+    @Override
+    public void updateProject(Long projectId, Project projectUpdates) {
+        logger.info("Updating project with id: " + projectId);
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("The project with id " + projectId + " does not exist."));
+
+        boolean isProjectUpdated = false;
+
+        if (projectUpdates.getYear() != 0 && projectUpdates.getYear() != project.getYear()) {
+            project.setYear(projectUpdates.getYear());
+            isProjectUpdated = true;
         }
-        logger.info("Project updated successfully!");
-        projectRepository.save(project);
+        if (projectUpdates.getSite() != null && !projectUpdates.getSite().equals(project.getSite())) {
+            project.setSite(projectUpdates.getSite());
+            isProjectUpdated = true;
+        }
+        if (projectUpdates.getRepository() != null && !projectUpdates.getRepository().equals(project.getRepository())) {
+            project.setRepository(projectUpdates.getRepository());
+            isProjectUpdated = true;
+        }
+        if (projectUpdates.getCategory() != null && !projectUpdates.getCategory().equals(project.getCategory())) {
+            project.setCategory(projectUpdates.getCategory());
+            isProjectUpdated = true;
+        }
+        if (projectUpdates.getSkills() != null && !projectUpdates.getSkills().equals(project.getSkills())) {
+            project.setSkills(projectUpdates.getSkills());
+            isProjectUpdated = true;
+        }
+        if (projectUpdates.getImages() != null && !projectUpdates.getImages().equals(project.getImages())) {
+            project.setImages(projectUpdates.getImages());
+            isProjectUpdated = true;
+        }
+        boolean isTranslationUpdated = false;
+
+        for (ProjectTranslation translation : projectUpdates.getTranslations()) {
+            ProjectTranslation existingTranslation = translationRepository.findByProjectIdAndLanguageCode(project.getId(), translation.getLanguageCode()).orElseThrow();
+
+            if (translation.getName() != null && !translation.getName().equals(existingTranslation.getName())) {
+                existingTranslation.setName(translation.getName());
+                isTranslationUpdated = true;
+            }
+            if (translation.getDescription() != null && !translation.getDescription().equals(existingTranslation.getDescription())) {
+                existingTranslation.setDescription(translation.getDescription());
+                isTranslationUpdated = true;
+            }
+            System.out.println(isTranslationUpdated);
+            if (isTranslationUpdated) {
+                existingTranslation.setProject(project);
+                translationRepository.save(existingTranslation);
+            }
+        }
+
+        if (isProjectUpdated) {
+            projectRepository.save(project);
+        }
+
+        logger.info("Project and translation updated successfully!");
     }
 
     @Override
     public void deleteProject(Long id) {
-        logger.info("Removing project with id " + id);
-        if (!projectRepository.findById(id).isPresent()) {
-            logger.info("Project removal failure.");
+        logger.info("Removing project with id: " + id);
+
+        if (!projectRepository.existsById(id)) {
+            logger.warn("Project removal failure: No project found with id " + id);
             throw new ResourceNotFoundException("There is no project with the id " + id);
         }
+
         logger.info("Project removed successfully!");
         projectRepository.deleteById(id);
     }
 
-    /*@Override
-    public List<String> uploadImages(List<MultipartFile> files) throws IOException {
-        logger.info("Uploading images to Cloudinary...");
-        List<String> imageUrls = new ArrayList<>();
-
-        for (MultipartFile file : files) {
-            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
-            String imageUrl = (String) uploadResult.get("url");
-            imageUrls.add(imageUrl);
+    private boolean translationExists(List<ProjectTranslation> translations) {
+        for (ProjectTranslation translation : translations) {
+            if (translationRepository.existsByNameIgnoreCase(translation.getName().toLowerCase())) {
+                return true;
+            }
         }
-        logger.info("Images uploaded successfully.");
-        return imageUrls;
-    }*/
-
+        return false;
+    }
 }
+

@@ -1,14 +1,15 @@
 package com.ceciliasuarez.project.controller;
+
 import com.ceciliasuarez.project.model.ContactForm;
 import com.ceciliasuarez.project.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:5173/")
+@CrossOrigin(origins = "*")
 public class ContactController {
 
     @Autowired

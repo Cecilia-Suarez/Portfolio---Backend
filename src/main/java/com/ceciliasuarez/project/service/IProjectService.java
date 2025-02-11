@@ -1,22 +1,25 @@
 package com.ceciliasuarez.project.service;
 
+import com.ceciliasuarez.project.Dto.ProjectDto;
 import com.ceciliasuarez.project.model.Project;
-import org.springframework.web.multipart.MultipartFile;
+import com.ceciliasuarez.project.model.translation.ProjectTranslation;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 public interface IProjectService {
-    Optional<Project> getProjectById(Long id);
 
     List<Project> getAllProject(); //Ordenar por año
 
+    Project getProjectById(Long id);
+
     Project createProject(Project project);
 
-    void updateProject(Project project);
+    void updateProject(Long projectId, Project projectUpdates);
 
     void deleteProject(Long id);
 
-    /*List<String> uploadImages(List<MultipartFile> files) throws IOException;*/
+    ProjectTranslation addTranslation(Long projectId, ProjectTranslation translation);
+
+    ProjectDto getProjectByLanguage(Long projectId, String language);
+
 }

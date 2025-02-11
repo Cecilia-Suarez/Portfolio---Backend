@@ -1,77 +1,139 @@
 package com.ceciliasuarez.project.service.impl;
+
+import com.ceciliasuarez.project.Dto.SummaryDto;
 import com.ceciliasuarez.project.exceptions.DuplicateResourceException;
 import com.ceciliasuarez.project.exceptions.ResourceNotFoundException;
 import com.ceciliasuarez.project.model.Summary;
+import com.ceciliasuarez.project.model.translation.SummaryTranslation;
 import com.ceciliasuarez.project.repository.ISummaryRepository;
+import com.ceciliasuarez.project.repository.translation.ISummaryTranslationRepository;
 import com.ceciliasuarez.project.service.ISummaryService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class SummaryServiceImpl implements ISummaryService {
 
     private static final Logger logger = Logger.getLogger(SummaryServiceImpl.class);
+    private static final String DEFAULT_LANGUAGE = "es";
 
     @Autowired
     private ISummaryRepository summaryRepository;
 
+    @Autowired
+    private ISummaryTranslationRepository translationRepository;
+
     @Override
-    public Optional<Summary> getSummaryById(Long id) {
+    public Summary getSummaryById(Long id) {
         logger.info("Searching summary by id...");
-        Optional<Summary> summary = summaryRepository.findById(id);
-        if (!summary.isPresent()){
-            logger.info("Error when searching the summary with the id " + id);
-            throw new ResourceNotFoundException("The summary with the id does not exist.");
-        }
-        logger.info("Summary found successfully!");
-        return summary;
+        return summaryRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.info("Error when searching the summary with the id " + id);
+                    return new ResourceNotFoundException("The summary with the id does not exist.");
+                });
     }
 
     @Override
     public List<Summary> getAllSummary() {
-        logger.info("Summaries list:");
+        logger.info("Fetching all summaries...");
         return summaryRepository.findAll();
     }
 
     @Override
     public Summary createSummary(Summary summary) {
         logger.info("Saving new summary...");
-        List<Summary> listSummaries = getAllSummary();
-        for (Summary existingSummary: listSummaries) {
-            if (existingSummary.getName().equals(summary.getName())
-                    && existingSummary.getLocation().equals(summary.getLocation())
-                    && existingSummary.getYear() == summary.getYear()){
-                logger.info("Error when saving new category.");
-                throw new DuplicateResourceException("A summary with this name, location and year already exists.");
-            }
+
+        boolean exists = summaryRepository.existsByYearAndType(summary.getYear(), summary.getType());
+        if (exists) {
+            logger.info("Error when saving new summary. A summary with this year and type already exists.");
+            throw new DuplicateResourceException("A summary with this year and type already exists.");
         }
+
+        for (SummaryTranslation translation : summary.getTranslations()) {
+            translation.setSummary(summary);
+        }
+
+        summary = summaryRepository.save(summary);
+
         logger.info("Summary saved successfully!");
-        return summaryRepository.save(summary);
+        return summary;
     }
 
     @Override
     public void updateSummary(Summary summary) {
         logger.info("Updating summary...");
-        if (getSummaryById(summary.getId()) == null){
-            logger.info("Error updating summary.");
-            throw new ResourceNotFoundException("The summary could not be updated, because there is no summary with the given id.");
+
+        Summary existingSummary = summaryRepository.findById(summary.getId())
+                .orElseThrow(() -> {
+                    logger.info("Error updating summary.");
+                    return new ResourceNotFoundException("The summary could not be updated because no summary with the given id exists.");
+                });
+
+
+        for (SummaryTranslation translation : summary.getTranslations()) {
+            SummaryTranslation existingTranslation = translationRepository.findBySummaryIdAndLanguageCode(summary.getId(), translation.getLanguageCode()).orElseThrow();
+
+            existingTranslation.setSummary(existingSummary);
+            existingTranslation.setLanguageCode(translation.getLanguageCode());
+            existingTranslation.setLocation(translation.getLocation());
+            existingTranslation.setName(translation.getName());
+
+            translationRepository.save(existingTranslation);
         }
+
+        existingSummary.setYear(summary.getYear());
+        existingSummary.setType(summary.getType());
+
+        summaryRepository.save(existingSummary);
         logger.info("Summary updated successfully!");
-        summaryRepository.save(summary);
     }
 
     @Override
     public void deleteSummary(Long id) {
         logger.info("Removing summary with id " + id);
-        if (!summaryRepository.findById(id).isPresent()) {
-            logger.info("Summary removal failure.");
-            throw new ResourceNotFoundException("There is no summary with the id " + id);
-        }
+
+        Summary summary = summaryRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.info("Summary removal failure.");
+                    return new ResourceNotFoundException("There is no summary with the id " + id);
+                });
+
         logger.info("Summary removed successfully!");
-        summaryRepository.deleteById(id);
+        summaryRepository.delete(summary);
+
+    }
+
+    @Override
+    public SummaryTranslation addTranslation(Long summaryId, SummaryTranslation translation) {
+        logger.info("Adding translation for summary id " + summaryId);
+
+        Summary summary = summaryRepository.findById(summaryId)
+                .orElseThrow(() -> {
+                    logger.info("Error adding translation: summary not found.");
+                    return new ResourceNotFoundException("Summary not found with id: " + summaryId);
+                });
+
+        translation.setSummary(summary);
+        return translationRepository.save(translation);
+    }
+
+    @Override
+    public SummaryDto getSummaryByLanguage(Long summaryId, String language) {
+        logger.info("Fetching summary id " + summaryId + " with language " + language);
+
+        Summary summary = summaryRepository.findById(summaryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Summary not found with id: " + summaryId));
+
+        SummaryTranslation translation = translationRepository
+                .findBySummaryIdAndLanguageCode(summary.getId(), language)
+                .or(() -> translationRepository.findBySummaryIdAndLanguageCode(summary.getId(), DEFAULT_LANGUAGE))
+                .orElseThrow(() -> new ResourceNotFoundException("No translation found for summary id: " + summaryId));
+
+        logger.info("Summary found successfully.");
+
+        return new SummaryDto(summary.getId(), translation.getName(), translation.getLocation(), summary.getYear(), summary.getType());
     }
 }

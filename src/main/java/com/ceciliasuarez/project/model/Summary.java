@@ -1,8 +1,11 @@
 package com.ceciliasuarez.project.model;
 
+import com.ceciliasuarez.project.model.translation.SummaryTranslation;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 @Entity
 @Getter
@@ -14,14 +17,11 @@ public class Summary {
     private Long id;
 
     @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false)
-    private String location;
-
-    @Column(nullable = false)
     private int year;
 
     @Column(nullable = false)
     private Type type;
+
+    @OneToMany(mappedBy = "summary", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SummaryTranslation> translations;
 }
