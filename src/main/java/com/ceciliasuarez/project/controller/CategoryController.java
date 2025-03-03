@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/categories")
 @CrossOrigin(origins = "*")
@@ -61,5 +63,10 @@ public class CategoryController {
     public ResponseEntity<CategoryDto> getCategoryByLanguage(@PathVariable Long id, @RequestHeader(value = "Accept-Language", defaultValue = "es") String language) {
         CategoryDto categoryDto = categoryService.getCategoryByLanguage(id, language);
         return ResponseEntity.ok(categoryDto);
+    }
+
+    @GetMapping("/all")
+    public List<Category> getAllCategory() {
+        return categoryService.getAllCategory();
     }
 }

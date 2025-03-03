@@ -58,7 +58,7 @@ public class ProjectController {
     }
 
     @GetMapping("/detail/{id}/translations")
-    public ResponseEntity<ProjectDto> getProjectByLanguage(@PathVariable Long id, @RequestHeader(value = "Accept-Language", defaultValue = "es") String language) {
+    public ResponseEntity<ProjectDto> getProjectByLanguage(@PathVariable Long id, @RequestHeader(value = "Accept-Language", defaultValue = "es", required = false) String language) {
         ProjectDto projectDto = projectService.getProjectByLanguage(id, language);
         return ResponseEntity.ok(projectDto);
     }

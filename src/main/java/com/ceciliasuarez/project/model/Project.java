@@ -1,6 +1,7 @@
 package com.ceciliasuarez.project.model;
 
 import com.ceciliasuarez.project.model.translation.ProjectTranslation;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;

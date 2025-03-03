@@ -1,7 +1,6 @@
 package com.ceciliasuarez.project.service.impl;
 
 import com.ceciliasuarez.project.Dto.SummaryDto;
-import com.ceciliasuarez.project.exceptions.DuplicateResourceException;
 import com.ceciliasuarez.project.exceptions.ResourceNotFoundException;
 import com.ceciliasuarez.project.model.Summary;
 import com.ceciliasuarez.project.model.translation.SummaryTranslation;
@@ -45,12 +44,6 @@ public class SummaryServiceImpl implements ISummaryService {
     @Override
     public Summary createSummary(Summary summary) {
         logger.info("Saving new summary...");
-
-        boolean exists = summaryRepository.existsByYearAndType(summary.getYear(), summary.getType());
-        if (exists) {
-            logger.info("Error when saving new summary. A summary with this year and type already exists.");
-            throw new DuplicateResourceException("A summary with this year and type already exists.");
-        }
 
         for (SummaryTranslation translation : summary.getTranslations()) {
             translation.setSummary(summary);
