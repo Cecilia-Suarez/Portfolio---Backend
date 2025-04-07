@@ -8,13 +8,20 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class FilterConfig {
 
+    private final AuthFilter authFilter;
+
+    public FilterConfig(AuthFilter authFilter) {
+        this.authFilter = authFilter;
+    }
+
     @Bean
     public FilterRegistrationBean<AuthFilter> loggingFilter() {
         FilterRegistrationBean<AuthFilter> registrationBean = new FilterRegistrationBean<>();
 
-        registrationBean.setFilter(new AuthFilter());
+        registrationBean.setFilter(authFilter);
         registrationBean.addUrlPatterns("/projects/*", "/categories/*", "/skills/*", "/summaries/*");
 
         return registrationBean;
     }
 }
+
